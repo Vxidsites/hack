@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SINGULARITY: OMEGA CORE // Quantum Black Hole Simulator & Starfighter</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2240%22 fill=%22black%22 stroke=%22%2300ffff%22 stroke-width=%228%22/></svg>">
+</head>
+<body>
+  <!-- 3D WebGL Canvas Layer -->
+  <div id="canvas-container"></div>
+
+  <!-- CRT Scanlines & Visual FX -->
+  <div class="scanlines"></div>
+  <div id="flash-overlay"></div>
+
+  <!-- Flight Reticle HUD (Active in Cockpit & Starship Mode) -->
+  <div class="reticle">
+    <div class="reticle-circle"></div>
+    <div class="reticle-dot"></div>
+  </div>
+
+  <!-- Top Telemetry Header Bar -->
+  <header class="top-nav glass-panel">
+    <div class="brand">
+      <div class="brand-logo"></div>
+      <div>
+        <div class="brand-title">SINGULARITY: OMEGA</div>
+        <div style="font-size: 11px; color: #64748b; letter-spacing: 1px;">KERR METRIC RELATIVISTIC SIMULATOR</div>
+      </div>
+    </div>
+
+    <!-- Live Telemetry -->
+    <div class="telemetry-bar">
+      <div class="stat-item">
+        <span class="stat-label">Camera Mode</span>
+        <span class="stat-val" id="cam-mode-indicator">ORBIT</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Ship Velocity</span>
+        <span class="stat-val" id="hud-speed">0 km/s</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Event Horizon Proximity</span>
+        <span class="stat-val" id="hud-distance">110 AU</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Quantum State</span>
+        <span class="stat-val" style="color: #10b981;">STABLE</span>
+      </div>
+    </div>
+
+    <!-- Proximity Alert & Audio Toggle -->
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <div id="hud-warning" class="hidden">⚠️ CRITICAL: EVENT HORIZON PROXIMITY</div>
+      <button id="btn-audio" class="btn-chip" style="padding: 6px 12px; font-size: 14px;" title="Toggle Cosmic Audio [M]">
+        <span id="audio-icon">🔊</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Left Control Dock: Presets, Mass, Time Scale -->
+  <aside class="left-dock glass-panel">
+    <div class="dock-header">Visual Preset</div>
+    <div class="preset-grid">
+      <button class="btn-chip active" data-preset="gargantua">🌟 Gargantua</button>
+      <button class="btn-chip" data-preset="cyberpunk">⚡ Cyberpunk</button>
+      <button class="btn-chip" data-preset="abyssal">🌌 Abyssal</button>
+      <button class="btn-chip" data-preset="solar">🔥 Solar Flare</button>
+      <button class="btn-chip" data-preset="matrix" style="grid-column: span 2;">💻 Quantum Matrix</button>
+    </div>
+
+    <div class="dock-header" style="margin-top: 8px;">Cosmic Parameters</div>
+    
+    <!-- Mass Slider -->
+    <div class="slider-group">
+      <div class="slider-header">
+        <span>Black Hole Mass</span>
+        <span id="mass-readout" style="color: #38bdf8; font-weight: bold;">1000 M☉</span>
+      </div>
+      <input type="range" id="slider-mass" min="300" max="3000" step="50" value="1000">
+    </div>
+
+    <!-- Time Dilation Slider -->
+    <div class="slider-group">
+      <div class="slider-header">
+        <span>Time Dilation (Relativistic)</span>
+        <span id="time-readout" style="color: #38bdf8; font-weight: bold;">1.0x</span>
+      </div>
+      <input type="range" id="slider-time" min="0.1" max="4.0" step="0.1" value="1.0">
+    </div>
+
+    <div class="dock-header" style="margin-top: 8px;">Perspective</div>
+    <div class="preset-grid">
+      <button class="btn-chip" data-cam="orbit">🪐 God Orbit</button>
+      <button class="btn-chip" data-cam="starship">🚀 Starfighter</button>
+      <button class="btn-chip" data-cam="cockpit">🎛️ Cockpit POV</button>
+      <button class="btn-chip" data-cam="cinematic">🎬 Flyby Cam</button>
+      <button class="btn-chip" data-cam="fall" style="grid-column: span 2;">🕳️ Singularity Plunge</button>
+    </div>
+  </aside>
+
+  <!-- Right Keybinds Quick-Ref -->
+  <aside class="right-dock glass-panel">
+    <div class="dock-header">Starfighter Controls</div>
+    <div class="keybind-row">
+      <span style="color: #94a3b8;">Pitch & Yaw</span>
+      <span class="key-tag">W / A / S / D</span>
+    </div>
+    <div class="keybind-row">
+      <span style="color: #94a3b8;">Roll Banking</span>
+      <span class="key-tag">Q / E</span>
+    </div>
+    <div class="keybind-row">
+      <span style="color: #94a3b8;">Hyper Boost</span>
+      <span class="key-tag">SHIFT</span>
+    </div>
+    <div class="keybind-row">
+      <span style="color: #94a3b8;">Plasma Cannons</span>
+      <span class="key-tag">LEFT CLICK</span>
+    </div>
+    <div class="keybind-row">
+      <span style="color: #94a3b8;">Singularity Torpedo</span>
+      <span class="key-tag">RIGHT CLICK</span>
+    </div>
+    <div class="keybind-row">
+      <span style="color: #94a3b8;">Toggle Camera</span>
+      <span class="key-tag">C</span>
+    </div>
+    <div class="keybind-row">
+      <span style="color: #94a3b8;">Supernova Blast</span>
+      <span class="key-tag">X</span>
+    </div>
+    <div class="keybind-row">
+      <span style="color: #94a3b8;">Hyperspace Warp</span>
+      <span class="key-tag">H</span>
+    </div>
+  </aside>
+
+  <!-- Bottom Interactive Dock: Celestial Spawners & Cataclysms -->
+  <footer class="bottom-dock glass-panel">
+    <span style="font-size: 11px; color: #64748b; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">
+      Spawn Celestial Body:
+    </span>
+    <button class="action-btn" data-spawn="terra">🌍 Terra Planet</button>
+    <button class="action-btn" data-spawn="molten">🌋 Molten Core</button>
+    <button class="action-btn" data-spawn="cyber">🌐 Cyber Ringworld</button>
+    <button class="action-btn" data-spawn="crystal">💎 Prismatic Asteroid</button>
+    <button class="action-btn" data-spawn="antimatter">☣️ Antimatter Nuke</button>
+
+    <div class="dock-divider"></div>
+
+    <button id="btn-warzone" class="action-btn danger">⚔️ AI Warzone</button>
+    <button id="btn-warp" class="action-btn" style="border-color: #00ffff;">⚡ Warp Drive</button>
+    <button id="btn-supernova" class="action-btn danger">💥 Supernova</button>
+    <button id="btn-clear" class="btn-chip" title="Clear Orbit" style="padding: 8px 12px;">🧹</button>
+  </footer>
+
+  <!-- Start Modal to Unlock Audio Context & Fullscreen -->
+  <div id="click-to-start">
+    <div class="brand-logo" style="width: 72px; height: 72px; margin-bottom: 20px;"></div>
+    <div class="start-title">SINGULARITY</div>
+    <div class="start-subtitle">OMEGA CORE // RELATIVISTIC SIMULATOR</div>
+    <p style="color: #cbd5e1; max-width: 500px; text-align: center; line-height: 1.6; margin-bottom: 30px; font-size: 15px;">
+      Experience real-time gravitational lensing, tidal spaghettification, 
+      procedural relativistic accretion disks, and deep-space starfighter dogfighting.
+    </p>
+    <button class="start-cta-btn">ENGAGE QUANTUM CORE</button>
+  </div>
+
+  <!-- Scripts: Local Three.js with CDN fallbacks -->
+  <script src="three.min.js"></script>
+  <script>
+    if (typeof THREE === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');
+    }
+  </script>
+  <script src="OrbitControls.js"></script>
+  <script>
+    if (typeof THREE !== 'undefined' && typeof THREE.OrbitControls === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>');
+    }
+  </script>
+
+  <!-- Core Simulation Modules -->
+  <script src="shaders.js"></script>
+  <script src="audio.js"></script>
+  <script src="physics.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
